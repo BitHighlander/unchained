@@ -14,14 +14,12 @@ aliases:
       branches:
         only:
           - main
-          - feature-bitcoin
 
   - &not-main
     filters:
       branches:
         ignore:
           - main
-          - feature-bitcoin
 
 commands:
   unchained-precheck:
