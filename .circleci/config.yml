@@ -146,7 +146,7 @@ jobs:
           name: pulumi up
           working_directory: pulumi
           command: |
-            pulumi stack select $PULUMI_ORG/dependencies
+            pulumi stack select $PULUMI_ORG/dependencies --yes
             pulumi config set --path unchained:common.cluster eks
             pulumi config set --path unchained:common.isLocal false
             pulumi config set --path unchained:common.eks.allAZs true
@@ -252,7 +252,7 @@ jobs:
             echo 'export MONGO_URL=<< parameters.mongo-url >>' >> $BASH_ENV
             echo 'export RPC_URL=<< parameters.rpc-url >>' >> $BASH_ENV
       - run:
-          name: pulumi up
+          name: pulumi up --yes
           working_directory: << parameters.pulumi-dir >>
           command: |
             pulumi stack select $PULUMI_ORG/<< parameters.pulumi-stack >>
@@ -325,7 +325,7 @@ workflows:
 
       - deploy-coinstack:
           name: preview bitcoin coinstack
-          pulumi-command: pulumi preview
+          pulumi-command: pulumi preview --yes
           requires:
             - deploy common unchained dependencies
           <<: *bitcoin
