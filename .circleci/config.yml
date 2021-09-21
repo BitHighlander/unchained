@@ -130,7 +130,6 @@ commands:
             echo [default] >> ~/.aws/credentials
             echo aws_access_key_id = $AWS_ACCESS_KEY_ID >> ~/.aws/credentials
             echo aws_secret_access_key = $AWS_SECRET_ACCESS_KEY >> ~/.aws/credentials
-
 jobs:
   deploy-dependencies:
     description: deploy all common unchained dependencies
@@ -181,7 +180,6 @@ jobs:
             pulumi config set --path unchained:common.rabbit.rabbitPort 30672
             pulumi config set --path unchained:common.rabbit.storageSize 100Gi
             pulumi up -f --yes --suppress-outputs
-
   deploy-coinstack:
     description: deploy a specific coinstack
     executor: pulumi
@@ -278,7 +276,6 @@ jobs:
             pulumi config set --path unchained:<< parameters.coinstack >>.indexer.daemon.storageSize << parameters.daemon-storage-size >>
             cat ./Pulumi.public.yaml
             << parameters.pulumi-command >>
-
   lint-and-test:
     description: lint and test project
     executor: node
