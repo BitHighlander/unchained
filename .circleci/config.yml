@@ -146,7 +146,7 @@ jobs:
           name: pulumi up
           working_directory: pulumi
           command: |
-            pulumi stack select $PULUMI_ORG/dependencies --yes
+            pulumi stack select $PULUMI_ORG/dependencies
             pulumi config set --path unchained:common.cluster eks
             pulumi config set --path unchained:common.isLocal false
             pulumi config set --path unchained:common.eks.allAZs true
