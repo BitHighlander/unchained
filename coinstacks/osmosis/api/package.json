@@ -17,7 +17,6 @@
   "dependencies": {
     "@shapeshiftoss/blockbook": "^1.4.0",
     "@shapeshiftoss/common-api": "^1.4.0",
-    "@shapeshiftoss/osmosis-ingester": "^1.4.0",
     "@shapeshiftoss/logger": "^1.4.0",
     "cors": "^2.8.5",
     "express": "^4.17.1",
