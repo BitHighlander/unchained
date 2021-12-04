@@ -1,2 +1,3 @@
-export * as Bitcoin from './generated/bitcoin'
-export * as Ethereum from './generated/ethereum'
+export * as bitcoin from './bitcoin'
+export * as ethereum from './ethereum'
+export * as unchained from './unchained'

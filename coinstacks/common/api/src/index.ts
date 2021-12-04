@@ -1,7 +1,8 @@
-import { Account, SendTxBody, TxHistory } from './models'
+import { Account, TxHistory } from './models'
 
 export * from './models'
 export * as middleware from './middleware'
+export * from './websocket'
 
 /**
  * Generic api error for handling failed requests
@@ -53,10 +54,10 @@ export interface BaseAPI {
   /**
    * Sends raw transaction to be broadcast to the node.
    *
-   * @param {SendTxBody} body serialized raw transaction hex
+   * @param {unknown} body serialized raw transaction hex
    *
    * @returns {Promise<string>} transaction id
    */
   // @Post('sendTx/')
-  sendTx(body: SendTxBody): Promise<string>
+  sendTx(body: unknown): Promise<string>
 }

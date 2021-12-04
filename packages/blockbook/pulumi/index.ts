@@ -1,3 +1,4 @@
+import { hashElement } from 'folder-hash'
 import { readFileSync } from 'fs'
 import * as k8s from '@pulumi/kubernetes'
 import { Config } from '@shapeshiftoss/common-pulumi'
@@ -10,29 +11,9 @@ interface DaemonConfig {
   storageSize: string
 }
 
-interface DaemonConfigBitcoin extends DaemonConfig {
-  chain: 'mainnet' | 'testnet'
-  node: 'bitcoind'
-}
-
-interface DaemonConfigDogecoin extends DaemonConfig {
-  chain: 'mainnet'
-  node: 'dogecoind'
-}
-
-interface DaemonConfigEthereum extends DaemonConfig {
-  chain: 'mainnet' | 'rinkeby' | 'ropsten'
-  node: 'geth'
-}
-
-interface DaemonConfigLitecoin extends DaemonConfig {
-  chain: 'mainnet' | 'testnet'
-  node: 'litecoind'
-}
-
 export interface IndexerConfig {
   cpuLimit: string
-  daemon?: DaemonConfigBitcoin | DaemonConfigDogecoin | DaemonConfigEthereum | DaemonConfigLitecoin
+  daemon?: DaemonConfig
   memoryLimit: string
   replicas: number
   storageClass: 'gp2' | 'hostpath' | 'standard'
@@ -44,7 +25,7 @@ export async function deployIndexer(
   asset: string,
   provider: k8s.Provider,
   namespace: string,
-  config: Pick<Config, 'indexer' | 'dockerhub' | 'isLocal' | 'rootDomainName' | 'environment'>
+  config: Pick<Config, 'indexer' | 'dockerhub' | 'isLocal' | 'rootDomainName' | 'environment' | 'network'>
 ): Promise<void> {
   if (config.indexer === undefined) return
 
@@ -52,6 +33,7 @@ export async function deployIndexer(
   const labels = { app, asset, tier }
   const name = `${asset}-${tier}`
 
+  const configFile = config.network !== 'mainnet' ? `config-${config.network}.json` : 'config.json'
   const appConfig = new k8s.core.v1.ConfigMap(
     `${name}-config`,
     {
@@ -59,7 +41,7 @@ export async function deployIndexer(
         namespace: namespace,
       },
       data: {
-        'config.json': readFileSync(`../indexer/config.json`).toString(),
+        'config.json': readFileSync(`../indexer/${configFile}`).toString(),
       },
     },
     { provider }
@@ -104,6 +86,8 @@ export async function deployIndexer(
     { provider }
   )
 
+  const { hash: tag } = await hashElement(`../../../packages/blockbook/Dockerfile`, { encoding: 'hex' })
+
   const podSpec: k8s.types.input.core.v1.PodTemplateSpec = {
     metadata: {
       namespace: namespace,
@@ -114,8 +98,8 @@ export async function deployIndexer(
         {
           name: name,
           image: config.dockerhub
-            ? `${config.dockerhub.server}/${config.dockerhub.username}/unchained-blockbook:latest`
-            : 'docker.io/shapeshiftdao/unchained-blockbook:latest',
+            ? `${config.dockerhub.server}/${config.dockerhub.username}/unchained-blockbook:${tag}`
+            : `docker.io/shapeshiftdao/unchained-blockbook:${tag}`,
           ...(config.isLocal && { imagePullPolicy: 'Never' }),
           ports: [{ containerPort: 8001, name: 'public' }],
           command: [
@@ -148,7 +132,7 @@ export async function deployIndexer(
         },
         {
           name: `${name}-monitor`,
-          image: 'shapeshiftdao/unchained-probe:latest',
+          image: 'shapeshiftdao/unchained-probe:1.0.0',
           readinessProbe: {
             exec: {
               command: ['/readiness.sh'],
@@ -186,7 +170,7 @@ export async function deployIndexer(
                 name: `${asset}-daemon`,
                 image: config.indexer.daemon.image,
                 command: ['/init.sh'],
-                env: [{ name: 'CHAIN', value: config.indexer.daemon.chain }],
+                env: [{ name: 'NETWORK', value: config.network }],
                 resources: {
                   limits: {
                     cpu: config.indexer.daemon.cpuLimit,
@@ -209,8 +193,7 @@ export async function deployIndexer(
               },
               {
                 name: `${asset}-daemon-monitor`,
-                image: 'shapeshiftdao/unchained-probe:latest',
-                env: [{ name: 'NODE', value: config.indexer.daemon.node }],
+                image: 'shapeshiftdao/unchained-probe:1.0.0',
                 readinessProbe: {
                   exec: {
                     command: ['/readiness.sh'],

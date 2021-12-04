@@ -1,11 +1,15 @@
 {
   "name": "@shapeshiftoss/blockbook-pulumi",
-  "version": "1.1.0",
+  "version": "1.4.0",
   "license": "MIT",
   "private": true,
-  "main": "src/index.ts",
+  "main": "index.ts",
   "scripts": {
     "build": "tsc",
     "clean": "rm -rf dist node_modules"
+  },
+  "dependencies": {
+    "@types/folder-hash": "^4.0.0",
+    "folder-hash": "^4.0.0"
   }
 }

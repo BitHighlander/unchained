@@ -1,6 +1,6 @@
 import { Tx } from '@shapeshiftoss/blockbook'
-import { Worker, Message } from '@shapeshiftoss/common-ingester'
-import { RegistryDocument, RegistryService } from '@shapeshiftoss/common-mongo'
+import { Worker, Message, RegistryMessage } from '@shapeshiftoss/common-ingester'
+import { RegistryService } from '@shapeshiftoss/common-mongo'
 import { logger } from '@shapeshiftoss/logger'
 
 const MONGO_DBNAME = process.env.MONGO_DBNAME
@@ -9,24 +9,16 @@ const MONGO_URL = process.env.MONGO_URL
 if (!MONGO_DBNAME) throw new Error('MONGO_DBNAME env var not set')
 if (!MONGO_URL) throw new Error('MONGO_URL env var not set')
 
-interface RegistryMessage extends RegistryDocument {
-  action: string
-}
-
 const registry = new RegistryService(MONGO_URL, MONGO_DBNAME)
 
 const onMessage = (worker: Worker) => async (message: Message) => {
-  let document: RegistryDocument | undefined
+  const msg: RegistryMessage = message.getContent()
+
   try {
-    const msg: RegistryMessage = JSON.parse(message.getContent())
-
-    // sanitize document to ensure document.registration.pubkey is set
-    const document = registry.sanitizeDocument(msg)
-
     if (msg.action === 'register') {
       await registry.add(msg)
 
-      document.registration.addresses?.forEach((address) => {
+      msg.registration.addresses?.forEach((address) => {
         const tx: Tx = {
           txid: `register-${Date.now()}`,
           vin: [{ n: 0, addresses: [address], isAddress: true }],
@@ -51,17 +43,17 @@ const onMessage = (worker: Worker) => async (message: Message) => {
       }
     }
 
-    worker.ackMessage(message, document.registration.pubkey)
+    worker.ackMessage(message, msg.client_id)
   } catch (err) {
     logger.error('onMessage.error:', err)
-    worker.retryMessage(message, document?.registration.pubkey as string)
+    worker.retryMessage(message, msg.client_id)
   }
 }
 
 const main = async () => {
   const worker = await Worker.init({
-    queueName: 'queue.ethereum.registry',
-    exchangeName: 'exchange.ethereum.tx',
+    queueName: 'queue.registry',
+    exchangeName: 'exchange.tx',
   })
 
   worker.queue?.prefetch(1)

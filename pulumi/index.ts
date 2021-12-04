@@ -2,7 +2,6 @@ import { hashElement } from 'folder-hash'
 import { core, Provider } from '@pulumi/kubernetes'
 import { buildAndPushImage, hasTag, getBaseHash } from '@shapeshiftoss/common-pulumi'
 import { EKSClusterLauncher } from '@shapeshiftoss/cluster-launcher'
-import { deployRabbit } from './rabbit'
 import { deployWatcher } from './watcher'
 import config from './config'
 
@@ -25,15 +24,16 @@ export = async (): Promise<Outputs> => {
     if (!config.rootDomainName) throw new Error('rootDomainName required')
 
     const cluster = await EKSClusterLauncher.create(name, {
-      rootDomainName: config.rootDomainName,
-      instanceTypes: config.eks.instanceTypes,
-      numInstancesPerAZ: 2,
       allAZs: config.eks.allAZs,
-      region: config.eks.region,
+      autoscaling: config.eks.autoscaling,
       cidrBlock: config.eks.cidrBlock,
-      profile: config.eks.profile,
-      traefik: config.eks.traefik,
       email: config.eks.email,
+      instanceTypes: config.eks.instanceTypes,
+      numInstancesPerAZ: config.eks.numInstancesPerAZ,
+      profile: config.eks.profile,
+      region: config.eks.region,
+      rootDomainName: config.rootDomainName,
+      traefik: config.eks.traefik,
     })
 
     outputs.kubeconfig = cluster.kubeconfig
@@ -88,7 +88,6 @@ export = async (): Promise<Outputs> => {
 
   namespaces.forEach(async (namespace) => {
     new core.v1.Namespace(namespace, { metadata: { name: namespace } }, { provider })
-    await deployRabbit(namespace, provider, namespace, config)
   })
 
   outputs.cluster = config.cluster
