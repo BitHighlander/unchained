@@ -1,6 +1,6 @@
 import WebSocket from 'isomorphic-ws'
 import type { ErrorResponse, RequestPayload, Topics, TxsTopicData } from '@shapeshiftoss/common-api'
-import type { SequencedTx } from '@shapeshiftoss/unchained-tx-parser'
+//import type { SequencedTx } from '@shapeshiftoss/unchained-tx-parser'
 
 export interface Connection {
   ws: WebSocket
@@ -9,12 +9,12 @@ export interface Connection {
 
 export interface TransactionMessage {
   subscriptionId: string
-  data: SequencedTx
+  data: any
 }
 
 export interface TxsParams {
   data: TxsTopicData | undefined
-  onMessage: (message: SequencedTx) => void
+  onMessage: (message: any) => void
   onError?: (err: ErrorResponse) => void
 }
 
@@ -60,7 +60,7 @@ export class Client {
   async subscribeTxs(
     subscriptionId: string,
     data: TxsTopicData,
-    onMessage: (message: SequencedTx) => void,
+    onMessage: (message: any) => void,
     onError?: (err: ErrorResponse) => void
   ): Promise<void> {
     // keep track of the onMessage and onError handlers associated with each subscriptionId

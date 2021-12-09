@@ -142,6 +142,7 @@ export class Client {
       }
     })
   }
+
   /**
    * Unsubscribe from transaction history and updates for newly confirmed and pending transactions.
    *
